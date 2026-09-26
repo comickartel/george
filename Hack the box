@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Cyber Range Command Center</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg-deep: #020617;
+            --bg-surface: #0b1329;
+            --border-color: #1e293b;
+            --color-htb: #9fe870;
+            --color-swigger: #ff6633;
+            --color-def: #38bdf8;
+            --color-lab: #ec4899;
+            --text-main: #f8fafc;
+            --text-muted: #64748b;
+            --glow-blue: #3b82f6;
+        }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: "Courier New", Courier, monospace, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .range-wrapper { width: 100%; max-width: 1200px; display: flex; flex-direction: column; gap: 32px; }
+        .range-header { border-bottom: 1px solid var(--border-color); padding-bottom: 24px; }
+        .range-header h1 { font-size: 2rem; font-weight: 800; text-transform: uppercase; }
+        .range-header h1 span { color: var(--glow-blue); text-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+        .range-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 6px; }
+        .range-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        @media (min-width: 768px) { .range-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .range-grid { grid-template-columns: repeat(4, 1fr); } }
+        
+        .range-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .range-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px; background: var(--border-color); transition: background 0.3s ease; }
+        
+        /* Interactive Cyber Accent Card Hover FX */
+        .card-htb:hover { border-color: var(--color-htb); box-shadow: 0 10px 30px rgba(159, 232, 112, 0.05); } .card-htb:hover::before { background: var(--color-htb); }
+        .card-swigger:hover { border-color: var(--color-swigger); box-shadow: 0 10px 30px rgba(255, 102, 51, 0.05); } .card-swigger:hover::before { background: var(--color-swigger); }
+        .card-def:hover { border-color: var(--color-def); box-shadow: 0 10px 30px rgba(56, 189, 248, 0.05); } .card-def:hover::before { background: var(--color-def); }
+        .card-lab:hover { border-color: var(--color-lab); box-shadow: 0 10px 30px rgba(236, 72, 153, 0.05); } .card-lab:hover::before { background: var(--color-lab); }
+        
+        .card-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; font-weight: 700; margin-bottom: 20px; }
+        .tier-label { text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: rgba(255,255,255,0.03); }
+        .card-htb .tier-label { color: var(--color-htb); }
+        .card-swigger .tier-label { color: var(--color-swigger); }
+        .card-def .tier-label { color: var(--color-def); }
+        .card-lab .tier-label { color: var(--color-lab); }
+        
+        /* Heading Block with Icon Space Layout */
+        .title-block { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
+        .card-title { font-size: 1.25rem; font-weight: 700; }
+        .card-desc { color: #94a3b8; font-size: 0.8rem; line-height: 1.5; margin-bottom: 20px; }
+        
+        /* --- VISUAL INTERACTIVE BLUE BLINKING NODE --- */
+        .platform-icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: #02040a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .blinking-blue-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--glow-blue);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 0 8px var(--glow-blue);
+        }
+        .blinking-blue-dot::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: var(--glow-blue);
+            border-radius: 50%;
+            animation: bluePulse 1.8s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+            top: 0;
+            left: 0;
+        }
+        @keyframes bluePulse {
+            0% { transform: scale(0.6); opacity: 1; }
+            80%, 100% { transform: scale(3); opacity: 0; }
+        }
+
+        .telemetry-screen { background: #02040a; border: 1px solid rgba(255,255,255,0.03); border-radius: 6px; margin-bottom: 20px; padding: 8px; font-size: 0.7rem; font-family: monospace; display: flex; flex-direction: column; gap: 4px; }
+        .telemetry-row { display: flex; justify-content: space-between; }
+        .stat-green { color: #22c55e; } .stat-amber { color: #f59e0b; }
+        
+        .launch-link { display: inline-flex; align-items: center; justify-content: center; width: 100%; padding: 12px; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; border-radius: 6px; text-decoration: none; border: 1px solid var(--border-color); color: var(--text-main); transition: all 0.2s ease; }
+        .card-htb .launch-link:hover { background: var(--color-htb); color: #000; border-color: var(--color-htb); }
+        .card-swigger .launch-link:hover { background: var(--color-swigger); color: #000; border-color: var(--color-swigger); }
+        .card-def .launch-link:hover { background: var(--color-def); color: #000; border-color: var(--color-def); }
+        .card-lab .launch-link:hover { background: var(--color-lab); color: #000; border-color: var(--color-lab); }
+    </style>
+</head>
+<body>
+    <div class="range-wrapper">
+        <header class="range-header">
+            <h1>Advanced Cyber Range <span>[BEYOND_THM]</span></h1>
+            <p>Deploy specialized sandboxes for unguided infrastructure penetration testing, forensics, and code auditing.</p>
+        </header>
+        <div class="range-grid">
+            
+            <!-- Hack The Box Terminal Block -->
+            <div class="range-card card-htb" onclick="window.open('https://hackthebox.com', '_blank')">
+                <div>
+                    <div class="card-meta"><span class="tier-label">Black Box</span><span class="focus-tag">Network / AD</span></div>
+                    <div class="title-block">
+                        <h2 class="card-title" style="color: var(--color-htb);">Hack The Box</h2>
+                        <div class="platform-icon-wrapper">
+                            <div class="blinking-blue-dot"></div>
+                        </div>
+                    </div>
+                    <p class="card-desc">Unguided systems exploitation and active directory domains.</p>
+                </div>
+                <div>
+                    <div class="telemetry-screen">
+                        <div class="telemetry-row"><span>PRO_LABS:</span><span class="stat-green">ONLINE</span></div>
+                        <div class="telemetry-row"><span>VULN_TARGETS:</span><span id="htb-count">381</span></div>
+                    </div>
+                    <a href="https://hackthebox.com" target="_blank" class="launch-link" onclick="event.stopPropagation();">Spawn Instance</a>
+                </div>
+            </div>
+
+            <!-- PortSwigger Web Security Academy Block -->
+            <div class="range-card card-swigger" onclick="window.open('https://portswigger.net', '_blank')">
+                <div>
+                    <div class="card-meta"><span class="tier-label">Deep AppSec</span><span class="focus-tag">Web / APIs</span></div>
+                    <div class="title-block">
+                        <h2 class="card-title" style="color: var(--color-swigger);">PortSwigger</h2>
+                        <div class="platform-icon-wrapper">
+                            <div class="blinking-blue-dot"></div>
+                        </div>
+                    </div>
+                    <p class="card-desc">Master application vulnerabilities and request smuggling.</p>
+                </div>
+                <div>
+                    <div class="telemetry-screen">
+                        <div class="telemetry-row"><span>LABS_FREE:</span><span class="stat-green">100% ACCESS</span></div>
+                        <div class="telemetry-row"><span>BURP_SUITE:</span><span class="stat-amber">INTEGRATED</span></div>
+                    </div>
+                    <a href="https://portswigger.net" target="_blank" class="launch-link" onclick="event.stopPropagation();">Intercept Traffic</a>
+                </div>
+            </div>
+
+            <!-- CyberDefenders Blue Team Block -->
+            <div class="range-card card-def" onclick="window.open('https://cyberdefenders.org', '_blank')">
+                <div>
+                    <div class="card-meta"><span class="tier-label">Blue Team</span><span class="focus-tag">Forensics / DFIR</span></div>
+                    <div class="title-block">
+                        <h2 class="card-title" style="color: var(--color-def);">CyberDefenders</h2>
+                        <div class="platform-icon-wrapper">
+                            <div class="blinking-blue-dot"></div>
+                        </div>
